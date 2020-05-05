@@ -78,7 +78,7 @@ module CarrierWave
         #
         def watermark(source, options={})
           options = DefaultWatermarkOptions.merge(options)
-          format = sanitized_format(options[:output_format])
+          format = sanitized_watermark_format(options[:output_format])
           watermark_file_path = options[:watermark_file]
 
           raise ArgumentError.new("No watermark filename given, must be a path to an existing sound file.") unless watermark_file_path
@@ -132,13 +132,16 @@ module CarrierWave
           converter.run
         end
 
-        def sanitized_format format
-          supported_formats = %i[mp3 wav]
+        def sanitized_format format, supported_formats: %i[mp3 wav]
           if supported_formats.include?(format.to_sym)
             format.to_s
           else
             raise ArgumentError.new("Unsupported audio format #{format}. Only conversion to #{supported_formats.to_sentence} allowed.")
           end
+        end
+
+        def sanitized_watermark_format format
+          sanitized_format format, supported_formats: [:mp3]
         end
 
         def output_options_for_format format
