@@ -26,7 +26,7 @@ class AudioUploader < CarrierWave::Uploader::Base
 end
 ```
 
-This gem provides two new processors for uploading audio files, `convert` and `watermark`. 
+This gem provides two new processors for uploading audio files, `convert` and `watermark`.
 
 ### Convert
 
@@ -48,9 +48,11 @@ If you'd like to convert from your initially uploaded file-type to a different o
   process :convert => [{output_format:, output_options:}]
 ```
 
-`output_format` - Accepts a symbol. The only currently available option is the default, `:mp3`.
+`output_format` - Accepts a symbol. Available options are: `:mp3` and `:wav`, default option is `:mp3`.
 
 `output_options` - Optional. Sox options for the output file (see [ruby-sox](https://github.com/TMXCredit/ruby-sox) and the [SoX documentation](http://sox.sourceforge.net/sox.pdf)). Defaults to:
+
+* When convert to .mp3:
 
 ```ruby
   {
@@ -58,6 +60,17 @@ If you'd like to convert from your initially uploaded file-type to a different o
     rate: 44100,
     channels: 2,
     compression: 128
+  }
+```
+
+* When convert to .wav:
+
+```ruby
+  {
+    type: output_format.to_s,
+    rate: 44100,
+    channels: 2,
+    bits: 16
   }
 ```
 

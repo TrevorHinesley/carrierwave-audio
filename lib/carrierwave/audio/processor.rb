@@ -26,7 +26,7 @@ module CarrierWave
         #
         #   :output_format => Output file format
         #
-        #     Currently only :mp3 supported
+        #     Currently :mp3 and :wav are supported
         #     Default is :mp3.
         #
         #   :logger => IOStream to log progress to.
@@ -48,9 +48,9 @@ module CarrierWave
           final_filename = tmp_filename(source: source, format: format)
           @log.timed("\nConverting...") do
             convert_file(
-              input_file_path: source, 
-              input_options: input_options, 
-              output_file_path: final_filename, 
+              input_file_path: source,
+              input_options: input_options,
+              output_file_path: final_filename,
               output_options: output_options_for_format(format).merge(output_options)
             )
           end
@@ -78,7 +78,7 @@ module CarrierWave
         #
         def watermark(source, options={})
           options = DefaultWatermarkOptions.merge(options)
-          format = sanitized_format(options[:output_format])
+          format = sanitized_watermark_format(options[:output_format])
           watermark_file_path = options[:watermark_file]
 
           raise ArgumentError.new("No watermark filename given, must be a path to an existing sound file.") unless watermark_file_path
@@ -96,9 +96,9 @@ module CarrierWave
             converted_watermark = tmp_filename(source: source, format: watermark_ext, prefix: "cnvt_wtmk")
             @log.timed("\nConverting watermarked file to source samplerate of #{source_samplerate}...") do
               convert_file(
-                input_file_path: watermark_file_path, 
-                input_options: watermark_options, 
-                output_file_path: converted_watermark, 
+                input_file_path: watermark_file_path,
+                input_options: watermark_options,
+                output_file_path: converted_watermark,
                 output_options: output_options_for_format(watermark_options[:type]).merge(rate: source_samplerate)
               )
             end
@@ -132,8 +132,7 @@ module CarrierWave
           converter.run
         end
 
-        def sanitized_format format
-          supported_formats = [:mp3]
+        def sanitized_format format, supported_formats: %i[mp3 wav]
           if supported_formats.include?(format.to_sym)
             format.to_s
           else
@@ -141,23 +140,25 @@ module CarrierWave
           end
         end
 
+        def sanitized_watermark_format format
+          sanitized_format format, supported_formats: [:mp3]
+        end
+
         def output_options_for_format format
           shared_options = {
-            channels: 2
+            type: format.to_s,
+            channels: 2,
+            rate: 44100
           }
 
-          if format.to_sym == :mp3
-            {
-              type: format.to_s,
-              rate: 44100,
-              compression: 128
-            }.merge(shared_options)
+          case format.to_sym
+          when :mp3
+            { compression: 128 }
+          when :wav
+            { bits: 16 }
           else
-            {
-              type: format.to_s,
-              rate: 44100
-            }.merge(shared_options)
-          end
+            {}
+          end.merge(shared_options)
         end
 
         # Generate a temporary filename
